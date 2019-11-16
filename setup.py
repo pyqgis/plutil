@@ -22,7 +22,7 @@ VERSION = None
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'qgis',
+    # 'qgis', There is no such package
     'PyQt5',
 ]
 
