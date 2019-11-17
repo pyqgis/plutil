@@ -24,6 +24,7 @@ VERSION = None
 REQUIRED = [
     # 'qgis', There is no such package
     'PyQt5',
+    'flask'
 ]
 
 # What packages are optional?

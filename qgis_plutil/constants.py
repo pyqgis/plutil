@@ -14,6 +14,9 @@ __email__ = "nicu.tofan@gmail.com"
 __package_url__ = 'https://github.com/pyqgis/%s' % __package_name__
 
 
+# Used by the http server to end its eecution
+ROUTE_SHUT_DOWN = 'shut-me-down'
+
 # ---- Constants for the logging system ----
 TRACE = 1
 UINFO = logging.INFO+1 # Information that also shows up in the bar

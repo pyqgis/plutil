@@ -8,7 +8,7 @@ from __future__ import print_function
 import logging
 import os
 
-from .constants import UERROR, UWARN, UINFO, TRACE, UCAKE
+from .constants import UERROR, UWARN, UINFO, TRACE, UCAKE, __package_name__
 
 
 class PlUtilHandler(logging.StreamHandler):
@@ -60,7 +60,8 @@ class PlUtilHandler(logging.StreamHandler):
             self.plugin.log_message(record.message, record.levelno)
 
     @staticmethod
-    def install(plugin, qgis_log_level, fmt=None, *args, **kwargs):
+    def install(plugin, qgis_log_level, fmt=None, include_lib_log=True,
+                *args, **kwargs):
         """
         Creates the handler and installs it.
 
@@ -71,6 +72,8 @@ class PlUtilHandler(logging.StreamHandler):
                 The threshold for messages to go to QGis log panel.
             fmt (logging.Formatter):
                 The format to be used with the logger.
+            include_lib_log (bool):
+                Should we install the handler for this library's own logging?.
 
         Return:
             Newly created handler.
@@ -92,11 +95,14 @@ class PlUtilHandler(logging.StreamHandler):
         )
 
         plugin.logger.addHandler(result)
+        if include_lib_log:
+            logging.getLogger(__package_name__).addHandler(result)
         return result
 
 
 def install_file_logger(plugin, fmt=None, force_create: bool = False,
-                        log_file: str = None):
+                        log_file: str = None,
+                        include_lib_log: bool = True):
     """
     Creates the handler and installs it.
 
@@ -109,6 +115,8 @@ def install_file_logger(plugin, fmt=None, force_create: bool = False,
             Create even if settings say otherwise.
         log_file (str):
             The file where we log to.
+        include_lib_log (bool):
+            Should we install the handler for this library's own logging?.
 
     Return:
         Newly created handler.
@@ -145,4 +153,6 @@ def install_file_logger(plugin, fmt=None, force_create: bool = False,
     )
 
     plugin.logger.addHandler(result)
+    if include_lib_log:
+        logging.getLogger(__package_name__).addHandler(result)
     return result

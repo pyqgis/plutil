@@ -16,7 +16,7 @@ from qgis.core import (
 import logging
 
 from .qlog import PlUtilHandler, install_file_logger
-from .constants import TRACE, UCAKE
+from .constants import TRACE, UCAKE, __package_name__
 
 
 class PlUtilPlugin(QObject):
@@ -123,10 +123,13 @@ class PlUtilPlugin(QObject):
                 QCoreApplication.installTranslator(self.translator)
 
     def unload(self):
-        """ Removes the menus and toolbars. """
+        """ Removes the menus and toolbars and stop everything else. """
         self.logger.debug("Plugin %s is being unloaded", self.plugin_name)
         self.translator = None
+        for handler in self.logger.handlers:
+            handler.close()
         self.logger.handlers =[]
+        logging.getLogger(__package_name__).handlers =[]
         for menu in self.menus:
             menu.clear()
             menu.deleteLater()
@@ -273,6 +276,7 @@ class PlUtilPlugin(QObject):
         self.add_action_to_toolbar(action, add_to_toolbar)
         self.add_action_to_menu(action, add_to_menu)
         self.actions.append(action)
+        self.logger.debug("Action %s has been created and inserted", text)
         return action
 
     def create_toolbar(self, name=None):
@@ -404,7 +408,7 @@ class PlUtilPlugin(QObject):
                     raise ValueError
 
             result = parent.addMenu(name) if icon is None \
-                        else parent.addMenu(QIcon(icon), name)
+                else parent.addMenu(QIcon(icon), name)
             break
 
         self.logger.debug("Menu %s has been created and inserted", name)
