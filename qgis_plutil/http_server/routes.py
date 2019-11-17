@@ -12,7 +12,7 @@ from flask import request
 logger = logging.getLogger('plutil.http.s')
 
 
-def define_common_routes(app, server, plugin):
+def define_common_routes(plugin, app, server):
     """ Some routes are always defined. """
 
     @app.route('/')

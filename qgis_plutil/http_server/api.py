@@ -82,7 +82,7 @@ class HttpServer(object):
             # Register routes.
             define_common_routes(app=self.app, server=self, plugin=self.plugin)
             for func in self.routes_constructors:
-                func(app=self.app, server=self, plugin=self.plugin)
+                func(self.plugin, app=self.app, server=self)
 
             self.server_thread = ServerThread(
                 host=host, port=port, app=self.app, server=self)
@@ -107,6 +107,7 @@ class HttpServer(object):
             if port is None:
                 port = int(self.plugin.get('http-server/port', 7768))
 
+            # Asking the server to shut down nicely.
             api_url = 'http://%s:%d/shut_me_down_used_for_restarts' % (host, port)
             headers = {
                 'Content-Type': 'application/json',
@@ -114,6 +115,8 @@ class HttpServer(object):
                 'Accept': 'application/json'
             }
             response = requests.post(api_url, headers=headers)
+
+            # The server accepts or not.
             if response.status_code == 200:
                 logger.debug("200 OK for request to shutdown")
                 logger.debug(response.content)
@@ -122,6 +125,8 @@ class HttpServer(object):
                 self.plugin.show_error(
                     self.plugin.tr("Unable to stop server (%r)") %
                     response.status_code)
+
+            # Terminate the thread.
             self.server_thread.terminate()
             self.server_thread.wait()
         except (SystemExit, KeyboardInterrupt):
