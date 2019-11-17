@@ -149,3 +149,15 @@ def check_layer(plugin, layer=None,
         break
 
     return layer if b_ok else None
+
+
+def update_layer(iface, layer):
+    """ Used after insertions were successful. """
+    layer.commitChanges()
+    layer.updateExtents()
+    # If caching is enabled, a simple canvas refresh might not be sufficient
+    # to trigger a redraw and you must clear the cached image for the layer
+    if iface.mapCanvas().isCachingEnabled():
+        layer.triggerRepaint()
+    else:
+        iface.mapCanvas().refresh()
