@@ -176,6 +176,7 @@ def get_layer(legend_name, iface, geom_type, default_group=None):
     Returns:
         QgsLayerTreeLayer, QgsVectorLayer
     """
+    is_new = False
     assert legend_name is not None
     if len(legend_name) == 0:
         map_layer = iface.layerTreeView().currentLayer()
@@ -204,11 +205,12 @@ def get_layer(legend_name, iface, geom_type, default_group=None):
                 geom_type = geometry_flat_name(geom_type)
             layer = QgsVectorLayer(geom_type, legend_name, "memory")
             map_layer = add_layer_to_legend(layer, group=group)
+            is_new = True
         else:
             map_layer = layers[0]
             layer = map_layer.layer()
 
-    return map_layer, layer
+    return map_layer, layer, is_new
 
 
 def current_layer(iface):
