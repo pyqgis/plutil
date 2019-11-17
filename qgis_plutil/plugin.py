@@ -139,7 +139,6 @@ class PlUtilPlugin(QObject):
         for action in self.actions:
             action.deleteLater()
 
-
     def get(self, key, default=None):
         """ Retrieves a setting. Never throws. """
         return QgsSettings().value('%s/%s' % (self.plugin_name, key), default)
