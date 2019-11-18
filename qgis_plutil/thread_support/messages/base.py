@@ -21,7 +21,7 @@ class TsMessage(object):
     Attributes:
 
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
         Constructor.
 
@@ -29,7 +29,7 @@ class TsMessage(object):
 
         """
         global _message_id_gen
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.message_id = _message_id_gen
         _message_id_gen = _message_id_gen + 1
 

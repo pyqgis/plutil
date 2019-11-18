@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import logging
+import threading
 import time
 import requests
 from PyQt5.QtCore import QThread
@@ -47,6 +48,13 @@ class HttpServer(GuiSide):
         self.api = None
         self.prev_banner = None
 
+        # These are processed messages that the thread wants to keep track
+        # The gui side will process messages and keep them until
+        # the thread takes them out or the list becomes full.
+        self.messages = []
+        self.messages_limit = 100
+        self.messages_lock = threading.Lock()
+
     def __str__(self):
         """ Represent this object as a human-readable string. """
         return 'HttpServer()'
@@ -54,6 +62,14 @@ class HttpServer(GuiSide):
     def __repr__(self):
         """ Represent this object as a python constructor. """
         return 'HttpServer()'
+
+    def message_accepted(self, message):
+        """ We re-implement this so that we can add the messsage to queue. """
+        if message.on_gui_side():
+            with self.messages_lock:
+                self.messages.append(message)
+                while len(self.messages) > self.messages_limit:
+                    self.messages.pop(0)
 
     def start(self, host=None, port=None):
         """

@@ -39,6 +39,10 @@ class GuiSide(Side):
         """ Represent this object as a python constructor. """
         return 'GuiSide()'
 
+    def message_accepted(self, message):
+        """ Reimplement this to handle the message. """
+        message.on_gui_side()
+
     def receiver(self, message):
         """ The slot where we receive messages emitted by the other side. """
         if self.state == self.STATE_DISCONNECTED:
@@ -48,10 +52,10 @@ class GuiSide(Side):
             assert self.thread_side is not None
             self.state = self.STATE_CONNECTED
             self.thread_side.state = self.STATE_CONNECTED
-            message.on_gui_side()
+            self.message_accepted(message)
         elif self.state == self.STATE_CONNECTED:
             assert self.thread_side is not None
-            message.on_gui_side()
+            self.message_accepted(message)
         else:
             raise ValueError
 
