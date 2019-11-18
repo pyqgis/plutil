@@ -10,12 +10,14 @@ import time
 import requests
 from PyQt5.QtCore import QThread
 
+from ..thread_support.gui_side import GuiSide
+from ..thread_support.thread_side import ThreadSide
 from ..constants import UERROR
 
 logger = logging.getLogger('plutil.http.s')
 
 
-class HttpServer(object):
+class HttpServer(GuiSide):
     """
     This class .
 
@@ -84,6 +86,7 @@ class HttpServer(object):
             for func in self.routes_constructors:
                 func(self.plugin, app=self.app, server=self)
 
+            self.tie(self.server_thread)
             self.server_thread = ServerThread(
                 host=host, port=port, app=self.app, server=self)
             self.server_thread.start()
@@ -147,7 +150,7 @@ class HttpServer(object):
         logger.debug("flask server stopped")
 
 
-class ServerThread(QThread):
+class ServerThread(ThreadSide, QThread):
     """ The object in the server thread. """
     def __init__(self, app, host, port, server):
         QThread.__init__(self)
@@ -160,6 +163,7 @@ class ServerThread(QThread):
     def run(self):
         # noinspection PyBroadException
         try:
+            self.thread_side_started()
             self.plugin.logger.debug(
                 "Start serving at %r port %r",
                 self.host, self.port)

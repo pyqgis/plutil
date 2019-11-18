@@ -44,7 +44,7 @@ class ThreadSide(Side):
         """ Represent this object as a python constructor. """
         return 'ThreadSide()'
 
-    def started(self):
+    def thread_side_started(self):
         """
         One time started event.
 
@@ -52,9 +52,9 @@ class ThreadSide(Side):
         the gui side so that the connection is finalized.
         """
         self.state = self.STATE_CONNECTING
-        self.send(HelloMessage())
+        self.send_to_gui(HelloMessage())
 
-    def send(self, message):
+    def send_to_gui(self, message):
         """
         Will send a message to the other side.
         """

@@ -26,7 +26,7 @@ class WorkerThread(ThreadSide, threading.Thread):
         self.stop = threading.Event()
 
     def run(self):
-        self.started()
+        self.thread_side_started()
         while not self.stop.is_set():
             pass
 
@@ -65,13 +65,13 @@ class TestTestee(TestCase):
         self.assertEqual(self.thread.state, self.thread.STATE_CONNECTED)
         msg = AMessage()
         self.assertEqual(msg.message_id, 2)
-        self.thread.send(msg)
+        self.thread.send_to_gui(msg)
         self.app.processEvents(QEventLoop.AllEvents, 10)
         self.assertEqual(msg.on_thread_side_called, 1)
         self.assertEqual(msg.on_thread_side_called, 1)
         msg = AMessage()
         self.assertEqual(msg.message_id, 3)
-        self.thread.send(msg)
+        self.thread.send_to_gui(msg)
         self.app.processEvents(QEventLoop.AllEvents, 10)
         self.assertEqual(msg.on_thread_side_called, 1)
         self.assertEqual(msg.on_thread_side_called, 1)
