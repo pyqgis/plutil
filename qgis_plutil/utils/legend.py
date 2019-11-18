@@ -91,16 +91,38 @@ def all_layers(parent=None):
     """
     if parent is None:
         parent = QgsProject.instance().layerTreeRoot()
-
+    result = []
     def do_a_group(grp, level=0):
         for child in grp.children():
             if isinstance(child, QgsLayerTreeGroup):
                 do_a_group(child, level=level + 1)
             elif isinstance(child, QgsLayerTreeLayer):
-                yield child
+                result.append(child)
 
     do_a_group(parent)
+    return result
 
+def all_layers_with_name(name, parent=None):
+    """
+    Iterator that yields each layer in provided parent and all its kids.
+
+    Arguments:
+        parent:
+            The object to iterate. If None will iterate the whole legend.
+    """
+    if parent is None:
+        parent = QgsProject.instance().layerTreeRoot()
+    result = []
+    def do_a_group(grp, level=0):
+        for child in grp.children():
+            if isinstance(child, QgsLayerTreeGroup):
+                do_a_group(child, level=level + 1)
+            elif isinstance(child, QgsLayerTreeLayer):
+                if child.name() == name:
+                    result.append(child)
+
+    do_a_group(parent)
+    return result
 
 def locate_own_layer(name, group):
     """ Attempts to locate a layer only as a direct child of the group."""
@@ -138,7 +160,8 @@ def add_layer_to_legend(layer, group=None, prj=None):
     """ Adds a layer to a project in specified group. """
     if prj is None:
         prj = QgsProject.instance()
-    group = get_path(path=group, prj=prj)
+    if isinstance(group, str):
+        group = get_path(path=group, prj=prj)
     QgsProject.instance().addMapLayer(layer, addToLegend=False)
     result = group.addLayer(layer)
     layer.setCrs(prj.crs())
@@ -179,14 +202,19 @@ def get_layer(legend_name, iface, geom_type, default_group=None):
     is_new = False
     assert legend_name is not None
     if len(legend_name) == 0:
+        logger.debug("No layer name provided; locating current layer...")
         map_layer = iface.layerTreeView().currentLayer()
         if map_layer is None:
             raise ValueError("No layer was provided and there "
                              "is no current layer")
         layer = map_layer.layer()
+        logger.debug("current layer is %s", layer.name())
     else:
+        logger.debug("Requesting to locate layer %s", legend_name)
         path = list(part for part in legend_name.split('/') if len(part) > 0)
+
         if len(path) > 1:
+            logger.debug("The path has %d components", len(path))
             legend_name = path[-1]
             group = get_path(path[:-1])
             map_layer = locate_own_layer(name=legend_name, group=group)
@@ -195,18 +223,34 @@ def get_layer(legend_name, iface, geom_type, default_group=None):
             else:
                 layers = []
         else:
-            layers = QgsProject.instance().mapLayersByName(legend_name)
+            logger.debug("The path has a single name; searching entire tree")
+            layers = all_layers_with_name(legend_name)
+            if len(layers) == 0:
+                map_layers = QgsProject.instance().mapLayersByName(legend_name)
+                layers = [QgsProject.instance().layerTreeRoot().findLayer(ly)
+                          for ly in map_layers]
             group = None
+            logger.debug("found %d layers", len(layers))
 
         if len(layers) == 0:
+            logger.debug("no layer has been located and default group is %r",
+                         default_group)
             if group is None and default_group:
+                logger.debug("locating default group")
                 group = get_path(default_group)
+
             if isinstance(geom_type, int):
                 geom_type = geometry_flat_name(geom_type)
+                logger.debug("geometry type parsed to %r", geom_type)
+            else:
+                logger.debug("geometry type is %r", geom_type)
+
             layer = QgsVectorLayer(geom_type, legend_name, "memory")
             map_layer = add_layer_to_legend(layer, group=group)
             is_new = True
+            logger.debug("layer was created and added to legend")
         else:
+            logger.debug("selecting first layer among %d", len(layers))
             map_layer = layers[0]
             layer = map_layer.layer()
 
