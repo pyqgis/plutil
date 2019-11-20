@@ -14,10 +14,12 @@ logger = logging.getLogger('plutil.side')
 
 class Side(object):
     """
-    This class .
+    Base class for gui and thread sides.
 
     Attributes:
-
+        state:
+            Connection state can be DISCONNECTED, CONNECTING or CONNECTED.
+            Initial state is DISCONNECTED.
     """
 
     STATE_DISCONNECTED = 1
