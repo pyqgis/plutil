@@ -31,7 +31,7 @@ class Side(object):
         Arguments:
 
         """
-        super().__init__(*args, **kwargs)
+        super(Side, self).__init__(*args, **kwargs)
         self.state = self.STATE_DISCONNECTED
 
     def __str__(self):

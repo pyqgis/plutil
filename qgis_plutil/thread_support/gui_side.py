@@ -18,22 +18,24 @@ logger = logging.getLogger('plutil.gui-side')
 
 class GuiSide(Side, QObject):
     """
-    This class .
+    The part of the system living in the gui (main) thread.
+
+    At this point the implementation requires that an event loop is present
+    in the thread hosting this instance. This can be used directly
+    with the plugin class as a mixin.
 
     Attributes:
-
+        side_workers (list):
+            The list of associated thread instances.
+        timer (QBasicTimer):
+            The timer that we use to regularly check for messages.
     """
-
     def __init__(self, *args, **kwargs):
         """
         Constructor.
-
-        Arguments:
-
         """
         super(GuiSide, self).__init__(*args, **kwargs)
         self.side_workers = []
-        self.thread_side = None
         self.timer = QBasicTimer()
 
     def __str__(self):
@@ -51,29 +53,26 @@ class GuiSide(Side, QObject):
     def receiver(self):
         """ The slot where we receive messages emitted by the other side. """
         for thread_side in self.side_workers:
-            logger.debug("pooling messages from thread")
             if not thread_side.sig.is_set():
                 continue
-            logger.debug("pending messages from thread")
             thread_side.sig.clear()
 
             for i in range(10):
                 try:
-                    message = self.thread_side.queue.get(block=False)
+                    message = thread_side.queue.get(block=False)
                 except Empty:
                     break
-                logger.debug("Received message %r", message)
+                logger.debug("Received message %r in state %r",
+                             message, self.state)
                 if self.state == self.STATE_DISCONNECTED:
                     assert False, "Should not receive a message in " \
                                   "disconnected state"
                 elif self.state == self.STATE_CONNECTING:
                     assert isinstance(message, HelloMessage)
-                    assert self.thread_side is not None
                     self.state = self.STATE_CONNECTED
-                    self.thread_side.state = self.STATE_CONNECTED
+                    thread_side.state = self.STATE_CONNECTED
                     self.message_accepted(message)
                 elif self.state == self.STATE_CONNECTED:
-                    assert self.thread_side is not None
                     self.message_accepted(message)
                 else:
                     raise ValueError("Unknown state: %r", self.state)
@@ -87,7 +86,6 @@ class GuiSide(Side, QObject):
         """
         thread_side.gui_side = self
         self.side_workers.append(thread_side)
-        self.thread_side = thread_side
         self.state = self.STATE_CONNECTING
         if not self.timer.isActive():
             milliseconds = thread_side.plugin.get('thread/gui-pool-interval',
