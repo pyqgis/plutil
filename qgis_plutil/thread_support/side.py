@@ -12,7 +12,7 @@ from PyQt5.QtCore import QObject
 logger = logging.getLogger('plutil.side')
 
 
-class Side(QObject):
+class Side(object):
     """
     This class .
 

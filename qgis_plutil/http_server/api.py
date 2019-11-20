@@ -15,19 +15,15 @@ from PyQt5.QtCore import QThread
 
 from ..thread_support.gui_side import GuiSide
 from ..thread_support.thread_side import ThreadSide
-from ..constants import UERROR
+from ..constants import UERROR, ADD_TO_QUEUE
 
 logger = logging.getLogger('plutil.http.s')
 
 
 class HttpServer(GuiSide):
     """
-    This class .
-
-    Attributes:
 
     """
-
     def __init__(self, plugin, routes_constructors=None):
         """
         Constructor.
@@ -40,7 +36,7 @@ class HttpServer(GuiSide):
                 before the server is started. see define_common_routes()
                 for an example of such a callable.
         """
-        super().__init__()
+        super(HttpServer, self).__init__()
         self.plugin = plugin
         self.routes_constructors = routes_constructors \
             if routes_constructors else []
@@ -66,11 +62,15 @@ class HttpServer(GuiSide):
         return 'HttpServer()'
 
     def message_accepted(self, message):
-        """ We re-implement this so that we can add the messsage to queue. """
-        if message.on_gui_side():
+        """ We re-implement this so that we can add the message to queue. """
+        if message.on_gui_side() == ADD_TO_QUEUE:
             with self.messages_lock:
-                self.messages[message.message_id] = message
+                self.messages[str(message.message_id)] = message
+                logger.debug("added message %r to http gui side queue",
+                             message.message_id)
                 while len(self.messages) > self.messages_limit:
+                    logger.debug("dropping message %r because queue is full",
+                                 message.message_id)
                     self.messages.popitem()
 
     def start(self, host=None, port=None):
@@ -104,16 +104,16 @@ class HttpServer(GuiSide):
             for func in self.routes_constructors:
                 func(self.plugin, app=self.app, server=self)
 
-            self.tie(self.server_thread)
             self.server_thread = ServerThread(
                 host=host, port=port, app=self.app, server=self)
+            self.tie(self.server_thread)
             self.server_thread.start()
 
             logger.info("server running at %s:%d", host, port)
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
-            self.plugin.log(UERROR, "Could not start http server",
+            self.plugin.logger.log(UERROR, "Could not start http server",
                             exc_info=True)
 
     def stop(self, host=None, port=None):
@@ -153,8 +153,8 @@ class HttpServer(GuiSide):
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
-            self.plugin.log(UERROR, "Could not stop http server",
-                            exc_info=True)
+            self.plugin.logger.log(UERROR, "Could not stop http server",
+                                   exc_info=True)
 
         self.server_thread = None
 
@@ -168,10 +168,10 @@ class HttpServer(GuiSide):
         logger.debug("flask server stopped")
 
 
-class ServerThread(ThreadSide, QThread):
+class ServerThread(ThreadSide, threading.Thread):
     """ The object in the server thread. """
     def __init__(self, app, host, port, server):
-        QThread.__init__(self)
+        super(ServerThread, self).__init__(self)
         self.app = app
         self.host = host
         self.port = port
@@ -188,4 +188,4 @@ class ServerThread(ThreadSide, QThread):
             self.app.run(host=self.host, port=self.port, debug=True,
                          load_dotenv=True, use_evalex=False, use_reloader=False)
         except Exception as exc:
-            self.plugin.logger.error("Failed to run the server")
+            self.plugin.logger.error("Failed to run the server", exc_info=True)

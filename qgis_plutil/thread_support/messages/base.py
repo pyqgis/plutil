@@ -21,7 +21,7 @@ class TsMessage(object):
     Attributes:
 
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, plugin, thread_side, *args, **kwargs):
         """
         Constructor.
 
@@ -29,9 +29,13 @@ class TsMessage(object):
 
         """
         global _message_id_gen
-        super().__init__(*args, **kwargs)
+        super(TsMessage, self).__init__(*args, **kwargs)
+
         self.message_id = _message_id_gen
         _message_id_gen = _message_id_gen + 1
+
+        self.plugin = plugin
+        self.thread_side = thread_side
 
     def __str__(self):
         """ Represent this object as a human-readable string. """

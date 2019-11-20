@@ -6,6 +6,7 @@ from __future__ import print_function
 
 import logging
 import threading
+from time import sleep
 from unittest import TestCase, SkipTest
 from unittest.mock import MagicMock
 
@@ -19,8 +20,8 @@ logger = logging.getLogger('tests.plutil.thread_support')
 
 
 class WorkerThread(ThreadSide, threading.Thread):
-    def __init__(self):
-        super(WorkerThread, self).__init__(name="WorkerThread")
+    def __init__(self, *args, **kwargs):
+        super(WorkerThread, self).__init__(name="WorkerThread", *args, **kwargs)
 
         # Set this to terminate the thread.
         self.stop = threading.Event()
@@ -32,8 +33,8 @@ class WorkerThread(ThreadSide, threading.Thread):
 
 
 class AMessage(TsMessage):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super(AMessage, self).__init__(*args, **kwargs)
         self.on_thread_side_called = 0
         self.on_on_gui_side = 0
 
@@ -48,11 +49,14 @@ class AMessage(TsMessage):
 
 class TestTestee(TestCase):
     def setUp(self):
+        self.plugin = MagicMock()
         self.app = QCoreApplication([])
-        self.thread = WorkerThread()
+        self.thread = WorkerThread(self.plugin)
         self.testee = GuiSide()
         self.testee.tie(self.thread)
         self.thread.start()
+        sleep(0.5)
+        self.testee.receiver()
 
     def tearDown(self):
         self.thread.stop.set()
@@ -61,18 +65,23 @@ class TestTestee(TestCase):
 
     def test_init(self):
         logger.debug("Run GuiSide/ThreadSide test starting")
-        self.app.processEvents(QEventLoop.AllEvents, 10)
+        self.app.processEvents(QEventLoop.AllEvents, 1)
+        sleep(0.2)
         self.assertEqual(self.thread.state, self.thread.STATE_CONNECTED)
-        msg = AMessage()
+        msg = AMessage(self.plugin, self.thread)
         self.assertEqual(msg.message_id, 2)
         self.thread.send_to_gui(msg)
-        self.app.processEvents(QEventLoop.AllEvents, 10)
+        sleep(0.2)
+        self.testee.receiver()
+        self.app.processEvents(QEventLoop.AllEvents, 1)
         self.assertEqual(msg.on_thread_side_called, 1)
         self.assertEqual(msg.on_thread_side_called, 1)
-        msg = AMessage()
+        msg = AMessage(self.plugin, self.thread)
         self.assertEqual(msg.message_id, 3)
         self.thread.send_to_gui(msg)
-        self.app.processEvents(QEventLoop.AllEvents, 10)
+        sleep(0.2)
+        self.testee.receiver()
+        self.app.processEvents(QEventLoop.AllEvents, 1)
         self.assertEqual(msg.on_thread_side_called, 1)
         self.assertEqual(msg.on_thread_side_called, 1)
         logger.debug("Run GuiSide/ThreadSide test ends")

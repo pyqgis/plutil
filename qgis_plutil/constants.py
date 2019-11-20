@@ -23,3 +23,8 @@ UINFO = logging.INFO+1 # Information that also shows up in the bar
 UCAKE = logging.INFO+2 # Information that also shows up in the bar
 UWARN = logging.WARNING+1 # Warning that also shows up in the bar
 UERROR = logging.ERROR+1 # Error that also shows up in the bar
+
+# Some functions return this value to inform the caller that the
+# message should be added to queue or not.
+ADD_TO_QUEUE = True
+DONT_ADD_TO_QUEUE = False

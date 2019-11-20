@@ -49,6 +49,7 @@ def fields_from_data(data):
                 raise ValueError(
                     "Data should all be dictionaries "
                     "or all lists")
+            
             for attrib_name in attributes:
                 attrib_name_str = str(attrib_name)
                 if attrib_name_str not in fields:
@@ -56,8 +57,10 @@ def fields_from_data(data):
                         attrib_name_str,
                         variant_ctor_for_object(
                             attributes[attrib_name]))
+
         elif not isinstance(attributes, (list, set, tuple)):
             raise ValueError("Attributes should be lists or dictionaries")
+
         else:
             if are_dicts is None:
                 are_dicts = False
@@ -65,6 +68,7 @@ def fields_from_data(data):
                 raise ValueError(
                     "Data should all be dictionaries "
                     "or all lists")
+            
             for i, attrib in enumerate(attributes):
                 attrib_name = "Field %d" % (i + 1)
                 if attrib_name not in fields:

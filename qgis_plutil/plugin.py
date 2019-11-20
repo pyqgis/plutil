@@ -54,7 +54,7 @@ class PlUtilPlugin(QObject):
             plugin_dir (str):
                 The directory where this plugin is stored.
         """
-        super().__init__()
+        super(PlUtilPlugin, self).__init__()
 
         # Save reference to the QGIS interface
         self.iface = iface
