@@ -6,12 +6,10 @@ from __future__ import unicode_literals
 from __future__ import print_function
 
 import logging
-
+from uuid import uuid4
 from qgis_plutil.constants import TRACE
 
 logger = logging.getLogger('plutil.th-msg')
-
-_message_id_gen = 1
 
 
 class TsMessage(object):
@@ -19,7 +17,7 @@ class TsMessage(object):
     Base class for messages exchanged between a thread and GUI thread .
 
     Attributes:
-
+        message_id
     """
     def __init__(self, plugin, thread_side, *args, **kwargs):
         """
@@ -28,12 +26,9 @@ class TsMessage(object):
         Arguments:
 
         """
-        global _message_id_gen
         super(TsMessage, self).__init__(*args, **kwargs)
 
-        self.message_id = _message_id_gen
-        _message_id_gen = _message_id_gen + 1
-
+        self.message_id = uuid4().hex
         self.plugin = plugin
         self.thread_side = thread_side
 
