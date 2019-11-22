@@ -76,7 +76,15 @@ class PlUtilPlugin(QObject):
 
     def locale_path(self):
         """ Returns the path of the file. """
-        locale = QgsSettings().value('locale/userLocale')[0:2]
+        locale = QgsSettings().value('locale/userLocale')
+        if locale is None:
+            locale = 'en'
+        elif len(locale) == 0:
+            locale = 'en'
+        elif len(locale) < 2:
+            pass
+        else:
+            locale = locale[0:2]
 
         path = self.get(
             'locale/%s/file' % locale,
@@ -128,8 +136,8 @@ class PlUtilPlugin(QObject):
         self.translator = None
         for handler in self.logger.handlers:
             handler.close()
-        self.logger.handlers =[]
-        logging.getLogger(__package_name__).handlers =[]
+        self.logger.handlers = []
+        logging.getLogger(__package_name__).handlers = []
         for menu in self.menus:
             menu.clear()
             menu.deleteLater()

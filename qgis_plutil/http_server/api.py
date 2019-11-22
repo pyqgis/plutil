@@ -99,13 +99,15 @@ class HttpServer(GuiSide):
             setattr(self.app, 'plutil_server', self)
             self.api = Api(self.app, catch_all_404s=True)
 
+            self.server_thread = ServerThread(
+                host=host, port=port, app=self.app, server=self)
+
             # Register routes.
             define_common_routes(app=self.app, server=self, plugin=self.plugin)
             for func in self.routes_constructors:
-                func(self.plugin, app=self.app, server=self)
+                func(self.plugin, app=self.app, server=self,
+                     server_thread=self.server_thread)
 
-            self.server_thread = ServerThread(
-                host=host, port=port, app=self.app, server=self)
             self.tie(self.server_thread)
             self.server_thread.start()
 
